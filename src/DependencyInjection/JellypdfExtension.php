@@ -14,11 +14,13 @@ class JellypdfExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        foreach ($config as $key => $value) {
+        foreach ($config as $key => $value)
+        {
             $container->setParameter("jellypdf.$key", $value);
         }
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../config'));
+        
         $loader->load('services.yaml');
     }
 }
