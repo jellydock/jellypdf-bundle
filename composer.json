@@ -1,0 +1,21 @@
+{
+  "name": "jellydock/jellypdf-bundle",
+  "description": "Symfony bundle to wrap jellypdf-cli for PDF generation",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Jellydock\\JellypdfBundle\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.1",
+    "symfony/process": "^6.0 || ^7.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0-dev"
+    }
+  },
+  "minimum-stability": "stable"
+}

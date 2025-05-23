@@ -1,0 +1,6 @@
+services:
+  Jellydock\JellypdfBundle\Service\PdfGenerator:
+    arguments:
+      $binaryPath: '%jellypdf.binary_path%'
+      $defaultFormat: '%jellypdf.default_format%'
+      $defaultEngine: '%jellypdf.default_engine%'
