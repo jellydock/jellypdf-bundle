@@ -2,19 +2,17 @@
 
 namespace Jellydock\JellypdfBundle\Service;
 
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
-
 class PdfGenerator
 {
-    public function __construct(
-        private string $binaryPath, 
-        private string $defaultFormat, 
-        private string $defaultEngine
-    ){
+    private string $binaryPath;
+
+    public function __construct(string $binaryPath)
+    {
+        $this->binaryPath = $binaryPath;
+
         if (!is_executable($this->binaryPath)) {
             throw new \RuntimeException(sprintf(
-                "jellypdf-cli not found or not executable at '%s'.\n\n➡️ Please run: npm install -g jellypdf-cli\n",
+                "jellypdf-cli not found or not executable at '%s'.\n\nPlease run: npm install -g jellypdf-cli\n",
                 $this->binaryPath
             ));
         }
@@ -22,11 +20,16 @@ class PdfGenerator
 
     public function generateFromHtml(string $html, ?string $outputPath = null, array $options = []): ?string
     {
-        $tmpInput = tempnam(sys_get_temp_dir(), 'jellypdf_input_').'.html';
+        $tmpInput = sprintf('%s.html', tempnam(sys_get_temp_dir(), 'jellypdf_input_'));
+
         file_put_contents($tmpInput, $html);
 
         $bufferMode = $outputPath === null;
-        $tmpOutput = $bufferMode ? tempnam(sys_get_temp_dir(), 'jellypdf_output_').'.pdf' : $outputPath;
+
+        $tmpOutput = $bufferMode 
+            ? sprintf('%s.pdf', tempnam(sys_get_temp_dir(), 'jellypdf_output_')) 
+            : $outputPath
+        ;
 
         $this->generate($tmpInput, $tmpOutput, $options);
 
@@ -43,37 +46,44 @@ class PdfGenerator
 
     public function generate(string $input, ?string $output = null, array $options = []): void
     {
-        $args = [ $this->binaryPath, $input ];
+        $cmd = implode(' ', [
+            escapeshellcmd($this->binaryPath),
+            escapeshellarg($input),
+            escapeshellarg($output),
+            $this->buildCommandOptions($options)
+        ])
 
-        if ($output) {
-            $args[] = $output;
+        exec(sprintf('%s 2>&1', $cmd), $outputLines, $exitCode);
+
+        if ($exitCode !== 0) {
+            throw new \RuntimeException(sprintf(
+                'jellypdf-cli failed with exit code %s:\n%s', 
+                $exitCode, 
+                implode("\n", $outputLines)
+            ));
         }
+    }
 
-        $options = array_merge([
-            '--format' => $this->defaultFormat,
-            '--engine' => $this->defaultEngine,
-        ], $options);
+    private function buildCommandOptions(array $options): array
+    {
+        return implode(' ', array_reduce(array_keys($options), function(array $carry, string $key) use ($options) {
 
-        foreach ($options as $key => $value)
-        {
+            $value = $options[$key];
+
             if (is_bool($value)) {
 
                 if ($value) {
-                    $args[] = is_numeric($key) ? $value : $key;
+                    $carry[] = escapeshellarg($key);
                 }
 
             } else {
 
-                $args[] = $key;
-                $args[] = (string)$value;
+                $carry[] = escapeshellarg($key);
+                $carry[] = escapeshellarg((string)$value);
             }
-        }
 
-        $process = new Process($args);
-        $process->run();
+            return $carry;
 
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
+        }, []));
     }
 }

@@ -17,14 +17,6 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue('/usr/local/bin/jellypdf-cli')
                     ->info('Path to jellypdf-cli binary')
                 ->end()
-                ->scalarNode('default_format')
-                    ->defaultValue('A4')
-                    ->info('Default paper format')
-                ->end()
-                ->scalarNode('default_engine')
-                    ->defaultValue('puppeteer')
-                    ->info('Default PDF rendering engine')
-                ->end()
             ->end()
         ;
 
